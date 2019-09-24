@@ -27,6 +27,7 @@ module.exports = (env = {}) => {
 
   return {
     cache: true,
+    mode: isDev ? 'development' : 'production',
     devtool: isDev ? 'eval-source-map' : 'source-map',
     devServer: DEV_SERVER,
 
@@ -40,7 +41,7 @@ module.exports = (env = {}) => {
     },
     output: {
       path: PATHS.dist,
-      filename: isDev ? '[name].js' : '[name].[hash].js',
+      filename: isDev ? '[name].js' : '[name].[chunkhash].js',
       publicPath: '/',
       // chunkFilename: '[id].chunk.js',
     },
@@ -118,18 +119,23 @@ module.exports = (env = {}) => {
       ],
     },
 
+    optimization: {
+      splitChunks: {
+        cacheGroups: {
+          commons: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendor',
+            chunks: 'all'
+          }
+        }
+      }
+    },
+
     plugins: [
       new webpack.DefinePlugin({
         'process.env': {
           NODE_ENV: JSON.stringify(isDev ? 'development' : 'production'),
         },
-      }),
-      new webpack.optimize.CommonsChunkPlugin({
-        name: 'vendor',
-        minChunks: (module) => module.context && module.context.indexOf('node_modules') !== -1,
-      }),
-      new webpack.optimize.CommonsChunkPlugin({
-        name: 'manifest',
       }),
       ...(isDev ? [
         new webpack.HotModuleReplacementPlugin({
@@ -141,14 +147,6 @@ module.exports = (env = {}) => {
         new webpack.LoaderOptionsPlugin({
           minimize: true,
           debug: false
-        }),
-        new webpack.optimize.UglifyJsPlugin({
-          beautify: false,
-          compress: {
-            screw_ie8: true
-          },
-          comments: false,
-          sourceMap: isSourceMap,
         }),
         new HtmlWebpackPlugin({
           template: './index.html',
