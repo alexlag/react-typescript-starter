@@ -14,7 +14,7 @@ export class Counter extends React.Component<IProps, IState> {
 
   private interval: any
 
-  public componentWillMount () {
+  public componentDidMount () {
     this.interval = setInterval(this.incrementCounter, 1000)
   }
 
